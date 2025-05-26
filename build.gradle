@@ -1,0 +1,91 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'org.smagesci'
+version = '1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // JADE Framework (local dependencies)
+    implementation files('libs/jade/lib/jade.jar')
+    implementation files('libs/jade/lib/jadeExamples.jar')
+
+    // Database connectivity - Últimas versiones
+    implementation 'org.postgresql:postgresql:42.7.4'
+    implementation 'com.mysql:mysql-connector-j:9.1.0'
+
+    // JSON processing (Jackson) - Últimas versiones para Java 24
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.18.2'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.18.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2'
+
+    // Logging - Últimas versiones estables compatibles con Java 24
+    implementation 'org.slf4j:slf4j-api:2.0.16'
+    implementation 'ch.qos.logback:logback-classic:1.5.12'
+    
+    // Additional utilities that might be needed
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
+    
+    // Testing dependencies - Últimas versiones para Java 24
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.14.2'
+}
+
+application {
+    mainClass = 'com.smagesci.MainContainerLauncher'
+}
+
+// Task para ejecutar el AgentLauncher
+task runAgentLauncher(type: JavaExec) {
+    group = 'application'
+    description = 'Run the Agent Launcher to start all SMAGESCI agents'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.smagesci.AgentLauncher'
+    
+    // JVM arguments para evitar warnings
+    jvmArgs = [
+        '--add-opens', 'java.base/java.lang=ALL-UNNAMED',
+        '--add-opens', 'java.base/java.util=ALL-UNNAMED'
+    ]
+}
+
+// Task para probar la conectividad con la base de datos
+task testDatabase(type: JavaExec) {
+    group = 'verification'
+    description = 'Test database connectivity and DAO functionality'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.smagesci.DatabaseConnectionTest'
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+// Configuration for better compilation
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:unchecked', '-Xlint:deprecation']
+}
+
+// Ensure proper resource handling
+processResources {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
