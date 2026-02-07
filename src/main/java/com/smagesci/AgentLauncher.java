@@ -5,6 +5,8 @@ import jade.core.ProfileImpl;
 import jade.core.Runtime;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * AgentLauncher - Lanzador principal del Sistema Multiagente SMAGESCI
@@ -31,6 +33,8 @@ import jade.wrapper.StaleProxyException;
  */
 
 public class AgentLauncher {
+    
+    private static final Logger log = LoggerFactory.getLogger(AgentLauncher.class);
 
     public static void main(String[] args) {
         Runtime rt = Runtime.instance();
@@ -41,7 +45,7 @@ public class AgentLauncher {
         // p.setParameter(Profile.CONTAINER_NAME, "AgentsContainer"); // Opcional
 
         ContainerController agentContainer = rt.createAgentContainer(p);
-        System.out.println("Contenedor de agentes creado y conectado al principal.");
+        log.info("Agent container created and connected to main container.");
 
         try {
             // Lanzar Agentes de Nivel Estratégico y de Gestión
@@ -107,10 +111,10 @@ public class AgentLauncher {
             // Agentes de Optimización (NUEVO)
             agentContainer.createNewAgent("GestorOptimizacion", "com.smagesci.agents.optimization.AgenteGestorOptimizacion", null).start();
 
-            System.out.println("Todos los agentes solicitados han sido lanzados (20 agentes en 12 categorías).");
+            log.info("All requested agents have been launched (20 agents in 12 categories).");
 
         } catch (StaleProxyException e) {
-            e.printStackTrace();
+            log.error("Error launching agents", e);
         }
     }
 }
