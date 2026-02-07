@@ -14,15 +14,12 @@ import jade.lang.acl.MessageTemplate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Agente responsable de la gestión de compras y adquisiciones.
  * Evalúa proveedores, negocia precios y gestiona órdenes de compra.
  */
 public class AgenteGestorDeCompras extends BaseAgent {
-
-    private static final Logger log = Logger.getLogger(AgenteGestorDeCompras.class.getName());
     
     private Map<String, SupplierInfo> suppliers;
     private Map<String, PurchaseOrder> activePurchaseOrders;
@@ -467,7 +464,7 @@ public class AgenteGestorDeCompras extends BaseAgent {
                         lowStockMaterials.add(materialId);
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid material ID format: " + materialId);
+                    log.warn("Invalid material ID format: " + materialId);
                 }
             }
 
@@ -629,12 +626,12 @@ public class AgenteGestorDeCompras extends BaseAgent {
                             .sum();
                     
                     if (totalStock < 50) { // Critical level
-                        log.warning("Critical inventory level for " + materialId + ": " + totalStock + " units remaining");
+                        log.warn("Critical inventory level for " + materialId + ": " + totalStock + " units remaining");
                         // Could trigger automatic reorder here
                         autoTriggerReorders(Arrays.asList(materialId));
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid material ID format: " + materialId);
+                    log.warn("Invalid material ID format: " + materialId);
                 }
             }
         } catch (Exception e) {

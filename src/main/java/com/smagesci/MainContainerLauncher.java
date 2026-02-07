@@ -6,8 +6,12 @@ import jade.core.Runtime;
 import jade.wrapper.AgentController;
 import jade.wrapper.ContainerController;
 import jade.wrapper.StaleProxyException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MainContainerLauncher {
+    
+    private static final Logger log = LoggerFactory.getLogger(MainContainerLauncher.class);
 
     public static void main(String[] args) {
         Runtime rt = Runtime.instance();
@@ -18,7 +22,7 @@ public class MainContainerLauncher {
         p.setParameter(Profile.PLATFORM_ID, "SMAGESCI-Platform");
 
         ContainerController mainContainer = rt.createMainContainer(p);
-        System.out.println("Contenedor principal creado. RMA debería estar visible.");
+        log.info("Main container created. RMA should be visible.");
 
         // Opcional: Iniciar algunos agentes clave aquí o usar AgentLauncher
         try {
@@ -29,13 +33,14 @@ public class MainContainerLauncher {
                 null // Sin argumentos iniciales
             );
             orquestador.start();
+            log.info("OrquestadorPrincipal agent started successfully");
 
             // Para lanzar el resto de agentes, considera un script o el AgentLauncher
             // Se recomienda lanzar los agentes en sus propios contenedores o con un delay
             // para no sobrecargar el inicio.
 
         } catch (StaleProxyException e) {
-            e.printStackTrace();
+            log.error("Error starting OrquestadorPrincipal agent", e);
         }
     }
 }

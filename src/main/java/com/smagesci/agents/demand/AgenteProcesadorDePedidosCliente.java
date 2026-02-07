@@ -16,11 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class AgenteProcesadorDePedidosCliente extends BaseAgent {
-
-    private static final Logger log = Logger.getLogger(AgenteProcesadorDePedidosCliente.class.getName());
     
     private InventoryDAO inventoryDAO;
     private Map<String, Order> pendingOrders;
@@ -33,7 +30,7 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
         pendingOrders = new HashMap<>();
         orderCounter = 1;
         
-        log.info("AgenteProcesadorDePedidosCliente " + getAID().getName() + " is ready");
+        log.info("AgenteProcesadorDePedidosCliente {} is ready", getAID().getName());
         registerService("customer-order-processing", "smagesci-order-processor");
 
         addBehaviour(new OrderProcessingBehaviour());
@@ -66,11 +63,11 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
                             handleModifyOrder(msg, data);
                             break;
                         default:
-                            log.warning("Unknown action received: " + action);
+                            log.warn("Unknown action received: " + action);
                             sendErrorResponse(msg, "Unknown action: " + action);
                     }
                 } catch (Exception e) {
-                    log.severe("Error processing order message: " + e.getMessage());
+                    log.error("Error processing order message: " + e.getMessage());
                     sendErrorResponse(msg, "Error processing order: " + e.getMessage());
                 }
             } else {
@@ -122,7 +119,7 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
                         unavailableItems.add(productId + " (requested: " + quantity + ", available: " + totalAvailable + ")");
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid product ID format: " + productId);
+                    log.warn("Invalid product ID format: " + productId);
                     stockAvailable = false;
                     unavailableItems.add(productId + " (invalid ID format)");
                 }
@@ -144,7 +141,7 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
                 reply.setContent(JsonUtil.toJson(response));
                 send(reply);
                 
-                log.warning("Order " + orderId + " rejected due to insufficient stock: " + unavailableItems);
+                log.warn("Order " + orderId + " rejected due to insufficient stock: " + unavailableItems);
                 return;
             }
             
@@ -173,7 +170,7 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
                     }
                 }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid product ID format during reservation: " + item.getProductId());
+                    log.warn("Invalid product ID format during reservation: " + item.getProductId());
                 }
             }
             
@@ -200,7 +197,7 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
             notifyLogistics(order);
             
         } catch (Exception e) {
-            log.severe("Error processing place order request: " + e.getMessage());
+            log.error("Error processing place order request: " + e.getMessage());
             sendErrorResponse(msg, "Internal error processing order");
         }
     }
@@ -263,7 +260,7 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
                 // For simplicity, we'll just reduce reserved quantity
                 // List<InventoryItem> inventoryItems = inventoryDAO.findByItemId(itemId);
             } catch (NumberFormatException e) {
-                log.warning("Invalid product ID format during cancellation: " + item.getProductId());
+                log.warn("Invalid product ID format during cancellation: " + item.getProductId());
             }
         }
         
@@ -329,7 +326,7 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
         reply.setContent(JsonUtil.toJson(error));
         send(reply);
         
-        log.severe("Order processing error: " + errorMessage);
+        log.error("Order processing error: " + errorMessage);
     }
 
     @Override
