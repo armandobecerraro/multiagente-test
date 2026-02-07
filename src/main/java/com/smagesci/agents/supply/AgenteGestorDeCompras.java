@@ -464,7 +464,7 @@ public class AgenteGestorDeCompras extends BaseAgent {
                         lowStockMaterials.add(materialId);
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid material ID format: " + materialId);
+                    log.warn("Invalid material ID format: " + materialId);
                 }
             }
 
@@ -626,12 +626,12 @@ public class AgenteGestorDeCompras extends BaseAgent {
                             .sum();
                     
                     if (totalStock < 50) { // Critical level
-                        log.warning("Critical inventory level for " + materialId + ": " + totalStock + " units remaining");
+                        log.warn("Critical inventory level for " + materialId + ": " + totalStock + " units remaining");
                         // Could trigger automatic reorder here
                         autoTriggerReorders(Arrays.asList(materialId));
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid material ID format: " + materialId);
+                    log.warn("Invalid material ID format: " + materialId);
                 }
             }
         } catch (Exception e) {

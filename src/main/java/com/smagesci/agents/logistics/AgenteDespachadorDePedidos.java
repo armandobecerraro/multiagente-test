@@ -79,11 +79,11 @@ public class AgenteDespachadorDePedidos extends BaseAgent {
                             handleCalculateShippingCost(msg, data);
                             break;
                         default:
-                            log.warning("Unknown action received: " + action);
+                            log.warn("Unknown action received: " + action);
                             sendErrorResponse(msg, "Unknown action: " + action);
                     }
                 } catch (Exception e) {
-                    log.severe("Error processing dispatch message: " + e.getMessage());
+                    log.error("Error processing dispatch message: " + e.getMessage());
                     sendErrorResponse(msg, "Error processing request: " + e.getMessage());
                 }
             } else {
@@ -160,7 +160,7 @@ public class AgenteDespachadorDePedidos extends BaseAgent {
                         unavailableItems.add(productId + " (needed: " + quantity + ", available: " + totalAvailable + ")");
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid product ID format: " + productId);
+                    log.warn("Invalid product ID format: " + productId);
                     allItemsAvailable = false;
                     unavailableItems.add(productId + " (invalid ID format)");
                 }
@@ -179,7 +179,7 @@ public class AgenteDespachadorDePedidos extends BaseAgent {
                 reply.setContent(JsonUtil.toJson(response));
                 send(reply);
 
-                log.warning("Fulfillment rejected for order " + orderId + " due to insufficient inventory");
+                log.warn("Fulfillment rejected for order " + orderId + " due to insufficient inventory");
                 return;
             }
 
@@ -207,7 +207,7 @@ public class AgenteDespachadorDePedidos extends BaseAgent {
             log.info("Fulfillment scheduled for order " + orderId + " with shipment " + shipmentId);
 
         } catch (Exception e) {
-            log.severe("Error preparing fulfillment: " + e.getMessage());
+            log.error("Error preparing fulfillment: " + e.getMessage());
             sendErrorResponse(msg, "Error preparing fulfillment: " + e.getMessage());
         }
     }
