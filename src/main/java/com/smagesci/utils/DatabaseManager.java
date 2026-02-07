@@ -1,26 +1,52 @@
 package com.smagesci.utils;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
 public class DatabaseManager {
     
     private static final Logger log = LoggerFactory.getLogger(DatabaseManager.class);
-    private static Properties dbProperties;
+    private static HikariDataSource dataSource;
     
     static {
-        loadDatabaseProperties();
+        initializeDataSource();
     }
     
-    private static void loadDatabaseProperties() {
-        dbProperties = new Properties();
+    private static void initializeDataSource() {
+        try {
+            Properties dbProperties = loadDatabaseProperties();
+            
+            HikariConfig config = new HikariConfig();
+            config.setJdbcUrl(dbProperties.getProperty("db.url"));
+            config.setUsername(dbProperties.getProperty("db.username"));
+            config.setPassword(dbProperties.getProperty("db.password"));
+            
+            // Connection pool settings
+            config.setMaximumPoolSize(10);
+            config.setMinimumIdle(2);
+            config.setConnectionTimeout(30000);
+            config.setIdleTimeout(600000);
+            config.setMaxLifetime(1800000);
+            config.setConnectionTestQuery("SELECT 1");
+            
+            dataSource = new HikariDataSource(config);
+            log.info("HikariCP connection pool initialized successfully");
+        } catch (Exception e) {
+            log.error("Failed to initialize HikariCP connection pool", e);
+            throw new RuntimeException("Database initialization failed", e);
+        }
+    }
+    
+    private static Properties loadDatabaseProperties() {
+        Properties dbProperties = new Properties();
         
         // First priority: Environment variables
         String envUrl = System.getenv("DB_URL");
@@ -29,10 +55,10 @@ public class DatabaseManager {
         
         if (envUrl != null && !envUrl.trim().isEmpty()) {
             dbProperties.setProperty("db.url", envUrl);
-            dbProperties.setProperty("db.username", envUsername != null ? envUsername : "");
+            dbProperties.setProperty("db.username", envUsername != null ? envUsername : "postgres");
             dbProperties.setProperty("db.password", envPassword != null ? envPassword : "");
             log.info("Database properties loaded from environment variables");
-            return;
+            return dbProperties;
         }
         
         // Second priority: application.properties file
@@ -41,9 +67,9 @@ public class DatabaseManager {
                 dbProperties.load(is);
                 
                 // Resolve property placeholders with environment variables
-                String url = resolveProperty("db.url", "jdbc:postgresql://localhost:5432/supply_chain");
-                String username = resolveProperty("db.username", "postgres");
-                String password = resolveProperty("db.password", "");
+                String url = resolveProperty(dbProperties, "db.url", "jdbc:postgresql://localhost:5432/supply_chain");
+                String username = resolveProperty(dbProperties, "db.username", "postgres");
+                String password = resolveProperty(dbProperties, "db.password", "");
                 
                 dbProperties.setProperty("db.url", url);
                 dbProperties.setProperty("db.username", username);
@@ -52,21 +78,23 @@ public class DatabaseManager {
                 log.info("Database properties loaded from application.properties");
                 
                 // Check if required properties are present
-                if (url.isEmpty() || username.isEmpty() || password.isEmpty()) {
-                    log.warn("Some database properties are empty. Please set DB_URL, DB_USERNAME, and DB_PASSWORD environment variables.");
+                if (password.isEmpty()) {
+                    log.warn("Database password is empty. Set DB_PASSWORD environment variable for secure configuration.");
                 }
             } else {
                 log.error("Could not find application.properties file");
-                setMinimalFallbackProperties();
+                setMinimalFallbackProperties(dbProperties);
             }
         } catch (IOException e) {
             log.error("Error loading database properties", e);
-            setMinimalFallbackProperties();
+            setMinimalFallbackProperties(dbProperties);
         }
+        
+        return dbProperties;
     }
     
-    private static String resolveProperty(String key, String defaultValue) {
-        String value = dbProperties.getProperty(key);
+    private static String resolveProperty(Properties props, String key, String defaultValue) {
+        String value = props.getProperty(key);
         if (value == null || value.trim().isEmpty()) {
             return defaultValue;
         }
@@ -85,34 +113,32 @@ public class DatabaseManager {
         return value;
     }
     
-    private static void setMinimalFallbackProperties() {
-        dbProperties.setProperty("db.url", "jdbc:postgresql://localhost:5432/supply_chain");
-        dbProperties.setProperty("db.username", "postgres");
-        dbProperties.setProperty("db.password", "");
+    private static void setMinimalFallbackProperties(Properties props) {
+        props.setProperty("db.url", "jdbc:postgresql://localhost:5432/supply_chain");
+        props.setProperty("db.username", "postgres");
+        props.setProperty("db.password", "");
         log.warn("Using fallback database properties without password. Set environment variables for secure configuration.");
     }
     
     public static Connection getConnection() throws SQLException {
-        String url = dbProperties.getProperty("db.url");
-        String username = dbProperties.getProperty("db.username");
-        String password = dbProperties.getProperty("db.password");
-        
-        if (url == null || username == null) {
-            throw new SQLException("Database configuration is incomplete");
+        if (dataSource == null || dataSource.isClosed()) {
+            throw new SQLException("Database connection pool is not available");
         }
-        
-        if (password == null || password.isEmpty()) {
-            log.warn("Database password is empty. This is not recommended for production environments.");
+        return dataSource.getConnection();
+    }
+    
+    public static void shutdown() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            log.info("HikariCP connection pool shutdown successfully");
         }
-        
-        return DriverManager.getConnection(url, username, password);
     }
     
     public static void closeConnection(Connection connection) {
         if (connection != null) {
             try {
                 connection.close();
-                log.debug("Database connection closed");
+                log.debug("Database connection returned to pool");
             } catch (SQLException e) {
                 log.error("Error closing database connection", e);
             }

@@ -14,15 +14,12 @@ import jade.lang.acl.MessageTemplate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Agente responsable de la gestión de compras y adquisiciones.
  * Evalúa proveedores, negocia precios y gestiona órdenes de compra.
  */
 public class AgenteGestorDeCompras extends BaseAgent {
-
-    private static final Logger log = Logger.getLogger(AgenteGestorDeCompras.class.getName());
     
     private Map<String, SupplierInfo> suppliers;
     private Map<String, PurchaseOrder> activePurchaseOrders;

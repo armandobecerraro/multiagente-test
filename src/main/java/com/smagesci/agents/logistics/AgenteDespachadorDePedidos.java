@@ -15,15 +15,12 @@ import jade.lang.acl.MessageTemplate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Agente responsable del despacho y entrega de pedidos.
  * Gestiona la preparación, empaque y envío de órdenes a clientes.
  */
 public class AgenteDespachadorDePedidos extends BaseAgent {
-
-    private static final Logger log = Logger.getLogger(AgenteDespachadorDePedidos.class.getName());
     
     private InventoryDAO inventoryDAO;
     private Map<String, ShipmentInfo> activeShipments;

@@ -16,11 +16,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 public class AgenteProcesadorDePedidosCliente extends BaseAgent {
-
-    private static final Logger log = Logger.getLogger(AgenteProcesadorDePedidosCliente.class.getName());
     
     private InventoryDAO inventoryDAO;
     private Map<String, Order> pendingOrders;
@@ -33,7 +30,7 @@ public class AgenteProcesadorDePedidosCliente extends BaseAgent {
         pendingOrders = new HashMap<>();
         orderCounter = 1;
         
-        log.info("AgenteProcesadorDePedidosCliente " + getAID().getName() + " is ready");
+        log.info("AgenteProcesadorDePedidosCliente {} is ready", getAID().getName());
         registerService("customer-order-processing", "smagesci-order-processor");
 
         addBehaviour(new OrderProcessingBehaviour());
