@@ -12,10 +12,12 @@ import jade.core.behaviours.OneShotBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Agente responsable del despacho y entrega de pedidos.
@@ -23,7 +25,7 @@ import java.util.logging.Logger;
  */
 public class AgenteDespachadorDePedidos extends BaseAgent {
 
-    private static final Logger log = Logger.getLogger(AgenteDespachadorDePedidos.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AgenteDespachadorDePedidos.class);
     
     private InventoryDAO inventoryDAO;
     private Map<String, ShipmentInfo> activeShipments;
@@ -82,11 +84,11 @@ public class AgenteDespachadorDePedidos extends BaseAgent {
                             handleCalculateShippingCost(msg, data);
                             break;
                         default:
-                            log.warning("Unknown action received: " + action);
+                            log.warn("Unknown action received: {}", action);
                             sendErrorResponse(msg, "Unknown action: " + action);
                     }
                 } catch (Exception e) {
-                    log.severe("Error processing dispatch message: " + e.getMessage());
+                    log.error("Error processing dispatch message: {}", e.getMessage());
                     sendErrorResponse(msg, "Error processing request: " + e.getMessage());
                 }
             } else {
@@ -163,7 +165,7 @@ public class AgenteDespachadorDePedidos extends BaseAgent {
                         unavailableItems.add(productId + " (needed: " + quantity + ", available: " + totalAvailable + ")");
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid product ID format: " + productId);
+                    log.warn("Invalid product ID format: {}", productId);
                     allItemsAvailable = false;
                     unavailableItems.add(productId + " (invalid ID format)");
                 }
@@ -182,7 +184,7 @@ public class AgenteDespachadorDePedidos extends BaseAgent {
                 reply.setContent(JsonUtil.toJson(response));
                 send(reply);
 
-                log.warning("Fulfillment rejected for order " + orderId + " due to insufficient inventory");
+                log.warn("Fulfillment rejected for order {} due to insufficient inventory", orderId);
                 return;
             }
 
@@ -210,7 +212,7 @@ public class AgenteDespachadorDePedidos extends BaseAgent {
             log.info("Fulfillment scheduled for order " + orderId + " with shipment " + shipmentId);
 
         } catch (Exception e) {
-            log.severe("Error preparing fulfillment: " + e.getMessage());
+            log.error("Error preparing fulfillment: {}", e.getMessage());
             sendErrorResponse(msg, "Error preparing fulfillment: " + e.getMessage());
         }
     }
