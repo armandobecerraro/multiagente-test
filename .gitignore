@@ -5,10 +5,7 @@ build/
 !**/src/test/**/build/
 
 ### IntelliJ IDEA ###
-.idea/modules.xml
-.idea/jarRepositories.xml
-.idea/compiler.xml
-.idea/libraries/
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -40,3 +37,14 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### JADE runtime files ###
+APDescription.txt
+MTPs-Main-Container.txt
+
+### Logs ###
+logs/
+*.log
+
+### Environment files ###
+.env

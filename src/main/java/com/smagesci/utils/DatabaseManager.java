@@ -21,33 +21,75 @@ public class DatabaseManager {
     
     private static void loadDatabaseProperties() {
         dbProperties = new Properties();
+        
+        // First priority: Environment variables
+        String envUrl = System.getenv("DB_URL");
+        String envUsername = System.getenv("DB_USERNAME");
+        String envPassword = System.getenv("DB_PASSWORD");
+        
+        if (envUrl != null && !envUrl.trim().isEmpty()) {
+            dbProperties.setProperty("db.url", envUrl);
+            dbProperties.setProperty("db.username", envUsername != null ? envUsername : "");
+            dbProperties.setProperty("db.password", envPassword != null ? envPassword : "");
+            log.info("Database properties loaded from environment variables");
+            return;
+        }
+        
+        // Second priority: application.properties file
         try (InputStream is = DatabaseManager.class.getClassLoader().getResourceAsStream("application.properties")) {
             if (is != null) {
                 dbProperties.load(is);
-                log.info("Database properties loaded successfully");
                 
-                // Check if required properties are present and not empty
-                if (dbProperties.getProperty("db.url") == null || dbProperties.getProperty("db.url").trim().isEmpty() ||
-                    dbProperties.getProperty("db.username") == null || dbProperties.getProperty("db.username").trim().isEmpty() ||
-                    dbProperties.getProperty("db.password") == null) {
-                    log.warn("Application.properties file is empty or missing required properties, using fallback values");
-                    setFallbackProperties();
+                // Resolve property placeholders with environment variables
+                String url = resolveProperty("db.url", "jdbc:postgresql://localhost:5432/supply_chain");
+                String username = resolveProperty("db.username", "postgres");
+                String password = resolveProperty("db.password", "");
+                
+                dbProperties.setProperty("db.url", url);
+                dbProperties.setProperty("db.username", username);
+                dbProperties.setProperty("db.password", password);
+                
+                log.info("Database properties loaded from application.properties");
+                
+                // Check if required properties are present
+                if (url.isEmpty() || username.isEmpty() || password.isEmpty()) {
+                    log.warn("Some database properties are empty. Please set DB_URL, DB_USERNAME, and DB_PASSWORD environment variables.");
                 }
             } else {
                 log.error("Could not find application.properties file");
-                setFallbackProperties();
+                setMinimalFallbackProperties();
             }
         } catch (IOException e) {
             log.error("Error loading database properties", e);
-            setFallbackProperties();
+            setMinimalFallbackProperties();
         }
     }
     
-    private static void setFallbackProperties() {
+    private static String resolveProperty(String key, String defaultValue) {
+        String value = dbProperties.getProperty(key);
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        
+        // Check for ${ENV_VAR:defaultValue} pattern
+        if (value.startsWith("${") && value.endsWith("}")) {
+            String content = value.substring(2, value.length() - 1);
+            String[] parts = content.split(":", 2);
+            String envVar = parts[0];
+            String envDefault = parts.length > 1 ? parts[1] : defaultValue;
+            
+            String envValue = System.getenv(envVar);
+            return envValue != null ? envValue : envDefault;
+        }
+        
+        return value;
+    }
+    
+    private static void setMinimalFallbackProperties() {
         dbProperties.setProperty("db.url", "jdbc:postgresql://localhost:5432/supply_chain");
         dbProperties.setProperty("db.username", "postgres");
-        dbProperties.setProperty("db.password", "password");
-        log.info("Using fallback database properties");
+        dbProperties.setProperty("db.password", "");
+        log.warn("Using fallback database properties without password. Set environment variables for secure configuration.");
     }
     
     public static Connection getConnection() throws SQLException {
@@ -55,16 +97,15 @@ public class DatabaseManager {
         String username = dbProperties.getProperty("db.username");
         String password = dbProperties.getProperty("db.password");
         
-        if (url == null || username == null || password == null) {
+        if (url == null || username == null) {
             throw new SQLException("Database configuration is incomplete");
         }
         
-        try {
-            Class.forName("org.postgresql.Driver");
-            return DriverManager.getConnection(url, username, password);
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("PostgreSQL driver not found", e);
+        if (password == null || password.isEmpty()) {
+            log.warn("Database password is empty. This is not recommended for production environments.");
         }
+        
+        return DriverManager.getConnection(url, username, password);
     }
     
     public static void closeConnection(Connection connection) {
