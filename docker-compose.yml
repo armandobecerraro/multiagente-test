@@ -3,8 +3,8 @@ services:
     image: postgres:15-alpine
     container_name: supply_chain_db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-supply_chain}
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:?Database name required}
+      POSTGRES_USER: ${POSTGRES_USER:?Database user required}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Database password required}
     ports:
       - "${DB_PORT:-5432}:5432"
@@ -14,7 +14,7 @@ services:
     networks:
       - supply_chain_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
     image: dpage/pgadmin4:latest
     container_name: pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:?PgAdmin email required}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:?PgAdmin password required}
     ports:
       - "${PGADMIN_PORT:-8080}:80"

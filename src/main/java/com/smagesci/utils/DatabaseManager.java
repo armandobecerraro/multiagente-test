@@ -114,10 +114,17 @@ public class DatabaseManager {
     }
     
     private static void setMinimalFallbackProperties(Properties props) {
+        // In production, we should not use fallback values. This is only for development.
+        String env = System.getenv("ENVIRONMENT");
+        if ("production".equalsIgnoreCase(env)) {
+            log.error("Database configuration is missing in production environment. Cannot proceed without proper configuration.");
+            throw new RuntimeException("Database configuration required for production environment");
+        }
+        
         props.setProperty("db.url", "jdbc:postgresql://localhost:5432/supply_chain");
         props.setProperty("db.username", "postgres");
         props.setProperty("db.password", "");
-        log.warn("Using fallback database properties without password. Set environment variables for secure configuration.");
+        log.warn("Using fallback database properties for development. DO NOT use in production. Set DB_URL, DB_USERNAME, and DB_PASSWORD environment variables.");
     }
     
     public static Connection getConnection() throws SQLException {
