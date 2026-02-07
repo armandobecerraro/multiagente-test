@@ -11,10 +11,12 @@ import jade.core.behaviours.TickerBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * Agente responsable de la gestión de compras y adquisiciones.
@@ -22,7 +24,7 @@ import java.util.logging.Logger;
  */
 public class AgenteGestorDeCompras extends BaseAgent {
 
-    private static final Logger log = Logger.getLogger(AgenteGestorDeCompras.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(AgenteGestorDeCompras.class);
     
     private Map<String, SupplierInfo> suppliers;
     private Map<String, PurchaseOrder> activePurchaseOrders;
@@ -467,7 +469,7 @@ public class AgenteGestorDeCompras extends BaseAgent {
                         lowStockMaterials.add(materialId);
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid material ID format: " + materialId);
+                    log.warn("Invalid material ID format: {}", materialId);
                 }
             }
 
@@ -629,12 +631,12 @@ public class AgenteGestorDeCompras extends BaseAgent {
                             .sum();
                     
                     if (totalStock < 50) { // Critical level
-                        log.warning("Critical inventory level for " + materialId + ": " + totalStock + " units remaining");
+                        log.warn("Critical inventory level for {}: {} units remaining", materialId, totalStock);
                         // Could trigger automatic reorder here
                         autoTriggerReorders(Arrays.asList(materialId));
                     }
                 } catch (NumberFormatException e) {
-                    log.warning("Invalid material ID format: " + materialId);
+                    log.warn("Invalid material ID format: {}", materialId);
                 }
             }
         } catch (Exception e) {
