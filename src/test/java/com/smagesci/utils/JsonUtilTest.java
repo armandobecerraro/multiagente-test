@@ -43,7 +43,7 @@ class JsonUtilTest {
         String json = JsonUtil.toJson(null);
         
         // Then
-        // Jackson returns the string "null" for null input
+        // Jackson's ObjectMapper.writeValueAsString(null) returns the string "null" (not a null reference)
         assertEquals("null", json);
     }
 
@@ -80,7 +80,7 @@ class JsonUtilTest {
         OrderItem result = JsonUtil.fromJson(null, OrderItem.class);
         
         // Then
-        // Jackson throws IllegalArgumentException for null JSON string, caught and returns null
+        // JsonUtil catches IllegalArgumentException from Jackson for null JSON string and returns null
         assertNull(result);
     }
 
