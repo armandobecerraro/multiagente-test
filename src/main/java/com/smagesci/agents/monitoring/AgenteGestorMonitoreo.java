@@ -2,7 +2,7 @@ package com.smagesci.agents.monitoring;
 
 import com.smagesci.agents.BaseAgent;
 import jade.core.behaviours.TickerBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -92,16 +92,14 @@ public class AgenteGestorMonitoreo extends BaseAgent {
         });
         
         // Comportamiento principal para procesamiento de solicitudes
-        addBehaviour(new OneShotBehaviour() {
+        addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
-                while (true) {
-                    ACLMessage msg = receive();
-                    if (msg != null) {
-                        procesarSolicitudMonitoreo(msg);
-                    } else {
-                        block();
-                    }
+                ACLMessage msg = receive();
+                if (msg != null) {
+                    procesarSolicitudMonitoreo(msg);
+                } else {
+                    block();
                 }
             }
         });

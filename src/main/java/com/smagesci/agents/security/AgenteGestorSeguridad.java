@@ -2,7 +2,7 @@ package com.smagesci.agents.security;
 
 import com.smagesci.agents.BaseAgent;
 import jade.core.behaviours.TickerBehaviour;
-import jade.core.behaviours.OneShotBehaviour;
+import jade.core.behaviours.CyclicBehaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,16 +62,14 @@ public class AgenteGestorSeguridad extends BaseAgent {
         });
         
         // Comportamiento para procesamiento de mensajes de seguridad
-        addBehaviour(new OneShotBehaviour() {
+        addBehaviour(new CyclicBehaviour() {
             @Override
             public void action() {
-                while (true) {
-                    ACLMessage msg = receive();
-                    if (msg != null) {
-                        procesarMensajeSeguridad(msg);
-                    } else {
-                        block();
-                    }
+                ACLMessage msg = receive();
+                if (msg != null) {
+                    procesarMensajeSeguridad(msg);
+                } else {
+                    block();
                 }
             }
         });
