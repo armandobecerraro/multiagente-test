@@ -34,6 +34,9 @@ public class JsonUtil {
         } catch (JsonProcessingException e) {
             log.error("Error deserializando JSON a objeto: {}. JSON: {}", clazz.getSimpleName(), json, e);
             return null; // O lanzar una excepción personalizada
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid JSON input for class: {}. JSON: {}", clazz.getSimpleName(), json, e);
+            return null;
         }
     }
 }

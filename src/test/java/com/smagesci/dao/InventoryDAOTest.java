@@ -41,15 +41,15 @@ class InventoryDAOTest {
     @Test
     void testFindByProductIdAndLocation_ExistingItem_ReturnsInventoryItem() throws SQLException {
         // Given
-        String productId = "PROD001";
+        Integer itemId = 1;
         String location = "MAIN_WAREHOUSE";
         
         when(mockResultSet.next()).thenReturn(true);
-        when(mockResultSet.getLong("inventory_id")).thenReturn(1L);
-        when(mockResultSet.getString("product_id")).thenReturn(productId);
+        when(mockResultSet.getLong("id")).thenReturn(1L);
+        when(mockResultSet.getInt("item_id")).thenReturn(itemId);
         when(mockResultSet.getString("location")).thenReturn(location);
-        when(mockResultSet.getInt("quantity")).thenReturn(100);
-        when(mockResultSet.getInt("reserved_quantity")).thenReturn(10);
+        when(mockResultSet.getInt("current_stock")).thenReturn(100);
+        when(mockResultSet.getInt("reserved_stock")).thenReturn(10);
         when(mockResultSet.getInt("min_stock_level")).thenReturn(20);
         when(mockResultSet.getInt("max_stock_level")).thenReturn(500);
         
@@ -60,13 +60,13 @@ class InventoryDAOTest {
         try (MockedStatic<DatabaseManager> mockedDbManager = mockStatic(DatabaseManager.class)) {
             mockedDbManager.when(DatabaseManager::getConnection).thenReturn(mockConnection);
             
-            Optional<InventoryItem> result = inventoryDAO.findByProductIdAndLocation(productId, location);
+            Optional<InventoryItem> result = inventoryDAO.findByItemIdAndLocation(itemId, location);
 
             // Then
             assertTrue(result.isPresent());
             InventoryItem item = result.get();
             assertEquals(1L, item.getInventoryId());
-            assertEquals(productId, item.getProductId());
+            assertEquals(itemId, item.getItemId());
             assertEquals(location, item.getLocation());
             assertEquals(100, item.getQuantity());
             assertEquals(10, item.getReservedQuantity());
@@ -75,14 +75,14 @@ class InventoryDAOTest {
             assertEquals(90, item.getAvailableQuantity()); // 100 - 10
         }
 
-        verify(mockStatement).setString(1, productId);
+        verify(mockStatement).setInt(1, itemId);
         verify(mockStatement).setString(2, location);
     }
 
     @Test
     void testFindByProductIdAndLocation_NonExistingItem_ReturnsEmpty() throws SQLException {
         // Given
-        String productId = "NONEXISTENT";
+        Integer itemId = 999;
         String location = "MAIN_WAREHOUSE";
         
         when(mockResultSet.next()).thenReturn(false);
@@ -93,7 +93,7 @@ class InventoryDAOTest {
         try (MockedStatic<DatabaseManager> mockedDbManager = mockStatic(DatabaseManager.class)) {
             mockedDbManager.when(DatabaseManager::getConnection).thenReturn(mockConnection);
             
-            Optional<InventoryItem> result = inventoryDAO.findByProductIdAndLocation(productId, location);
+            Optional<InventoryItem> result = inventoryDAO.findByItemIdAndLocation(itemId, location);
 
             // Then
             assertFalse(result.isPresent());
@@ -103,7 +103,7 @@ class InventoryDAOTest {
     @Test
     void testUpdateQuantity_ValidUpdate_ReturnsTrue() throws SQLException {
         // Given
-        String productId = "PROD001";
+        Integer itemId = 1;
         String location = "MAIN_WAREHOUSE";
         int newQuantity = 150;
         
@@ -114,21 +114,21 @@ class InventoryDAOTest {
         try (MockedStatic<DatabaseManager> mockedDbManager = mockStatic(DatabaseManager.class)) {
             mockedDbManager.when(DatabaseManager::getConnection).thenReturn(mockConnection);
             
-            boolean result = inventoryDAO.updateQuantity(productId, location, newQuantity);
+            boolean result = inventoryDAO.updateQuantity(itemId, location, newQuantity);
 
             // Then
             assertTrue(result);
         }
 
         verify(mockStatement).setInt(1, newQuantity);
-        verify(mockStatement).setString(2, productId);
+        verify(mockStatement).setInt(2, itemId);
         verify(mockStatement).setString(3, location);
     }
 
     @Test
     void testUpdateQuantity_NoRowsUpdated_ReturnsFalse() throws SQLException {
         // Given
-        String productId = "NONEXISTENT";
+        Integer itemId = 999;
         String location = "MAIN_WAREHOUSE";
         int newQuantity = 150;
         
@@ -139,7 +139,7 @@ class InventoryDAOTest {
         try (MockedStatic<DatabaseManager> mockedDbManager = mockStatic(DatabaseManager.class)) {
             mockedDbManager.when(DatabaseManager::getConnection).thenReturn(mockConnection);
             
-            boolean result = inventoryDAO.updateQuantity(productId, location, newQuantity);
+            boolean result = inventoryDAO.updateQuantity(itemId, location, newQuantity);
 
             // Then
             assertFalse(result);
@@ -149,7 +149,7 @@ class InventoryDAOTest {
     @Test
     void testReserveQuantity_SufficientStock_ReturnsTrue() throws SQLException {
         // Given
-        String productId = "PROD001";
+        Integer itemId = 1;
         String location = "MAIN_WAREHOUSE";
         int quantityToReserve = 20;
         
@@ -160,14 +160,14 @@ class InventoryDAOTest {
         try (MockedStatic<DatabaseManager> mockedDbManager = mockStatic(DatabaseManager.class)) {
             mockedDbManager.when(DatabaseManager::getConnection).thenReturn(mockConnection);
             
-            boolean result = inventoryDAO.reserveQuantity(productId, location, quantityToReserve);
+            boolean result = inventoryDAO.reserveQuantity(itemId, location, quantityToReserve);
 
             // Then
             assertTrue(result);
         }
 
         verify(mockStatement).setInt(1, quantityToReserve);
-        verify(mockStatement).setString(2, productId);
+        verify(mockStatement).setInt(2, itemId);
         verify(mockStatement).setString(3, location);
         verify(mockStatement).setInt(4, quantityToReserve);
     }
@@ -175,7 +175,7 @@ class InventoryDAOTest {
     @Test
     void testReserveQuantity_InsufficientStock_ReturnsFalse() throws SQLException {
         // Given
-        String productId = "PROD001";
+        Integer itemId = 1;
         String location = "MAIN_WAREHOUSE";
         int quantityToReserve = 1000; // More than available
         
@@ -186,7 +186,7 @@ class InventoryDAOTest {
         try (MockedStatic<DatabaseManager> mockedDbManager = mockStatic(DatabaseManager.class)) {
             mockedDbManager.when(DatabaseManager::getConnection).thenReturn(mockConnection);
             
-            boolean result = inventoryDAO.reserveQuantity(productId, location, quantityToReserve);
+            boolean result = inventoryDAO.reserveQuantity(itemId, location, quantityToReserve);
 
             // Then
             assertFalse(result);
@@ -196,14 +196,14 @@ class InventoryDAOTest {
     @Test
     void testFindByProductId_MultipleLocations_ReturnsAllItems() throws SQLException {
         // Given
-        String productId = "PROD001";
+        Integer itemId = 1;
         
         when(mockResultSet.next()).thenReturn(true, true, false); // Two results, then no more
-        when(mockResultSet.getLong("inventory_id")).thenReturn(1L, 2L);
-        when(mockResultSet.getString("product_id")).thenReturn(productId, productId);
+        when(mockResultSet.getLong("id")).thenReturn(1L, 2L);
+        when(mockResultSet.getInt("item_id")).thenReturn(itemId, itemId);
         when(mockResultSet.getString("location")).thenReturn("MAIN_WAREHOUSE", "BACKUP_WAREHOUSE");
-        when(mockResultSet.getInt("quantity")).thenReturn(100, 50);
-        when(mockResultSet.getInt("reserved_quantity")).thenReturn(10, 5);
+        when(mockResultSet.getInt("current_stock")).thenReturn(100, 50);
+        when(mockResultSet.getInt("reserved_stock")).thenReturn(10, 5);
         when(mockResultSet.getInt("min_stock_level")).thenReturn(20, 10);
         when(mockResultSet.getInt("max_stock_level")).thenReturn(500, 200);
         
@@ -214,7 +214,7 @@ class InventoryDAOTest {
         try (MockedStatic<DatabaseManager> mockedDbManager = mockStatic(DatabaseManager.class)) {
             mockedDbManager.when(DatabaseManager::getConnection).thenReturn(mockConnection);
             
-            List<InventoryItem> results = inventoryDAO.findByProductId(productId);
+            List<InventoryItem> results = inventoryDAO.findByItemId(itemId);
 
             // Then
             assertEquals(2, results.size());
@@ -228,7 +228,7 @@ class InventoryDAOTest {
     @Test
     void testInsertInventoryItem_ValidItem_ReturnsTrue() throws SQLException {
         // Given
-        InventoryItem item = new InventoryItem("PROD001", "MAIN_WAREHOUSE", 100);
+        InventoryItem item = new InventoryItem(1, "MAIN_WAREHOUSE", 100);
         item.setMinStockLevel(20);
         item.setMaxStockLevel(500);
         
@@ -245,7 +245,7 @@ class InventoryDAOTest {
             assertTrue(result);
         }
 
-        verify(mockStatement).setString(1, "PROD001");
+        verify(mockStatement).setInt(1, 1);
         verify(mockStatement).setString(2, "MAIN_WAREHOUSE");
         verify(mockStatement).setInt(3, 100);
         verify(mockStatement).setInt(4, 0);  // reserved_quantity
@@ -256,7 +256,7 @@ class InventoryDAOTest {
     @Test
     void testDatabaseException_HandleGracefully() throws SQLException {
         // Given
-        String productId = "PROD001";
+        Integer itemId = 1;
         String location = "MAIN_WAREHOUSE";
         
         when(mockConnection.prepareStatement(anyString())).thenThrow(new SQLException("Database error"));
@@ -265,7 +265,7 @@ class InventoryDAOTest {
         try (MockedStatic<DatabaseManager> mockedDbManager = mockStatic(DatabaseManager.class)) {
             mockedDbManager.when(DatabaseManager::getConnection).thenReturn(mockConnection);
             
-            Optional<InventoryItem> result = inventoryDAO.findByProductIdAndLocation(productId, location);
+            Optional<InventoryItem> result = inventoryDAO.findByItemIdAndLocation(itemId, location);
 
             // Then
             assertFalse(result.isPresent());
